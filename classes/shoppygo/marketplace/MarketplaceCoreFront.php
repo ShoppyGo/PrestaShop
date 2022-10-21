@@ -24,7 +24,14 @@ class MarketplaceCoreFront
             $total_product = 0;
             $total_product = array_map(
                 function ($p) use (&$total_product) {
-                    return $total_product + $p['total'];
+
+
+                    //TODO $total = $p['total'] ?? $p['total_price_tax_incl'];  is not correct:
+                    //      $p['total'] when customer insert order
+                    //      $p['total_price_tax_incl'] when splitting orde. This is an error
+                    $total = $p['total'] ?? $p['total_price_tax_incl'];
+
+                    return $total_product + $total;
                 },
                 $filtered_product
             );
@@ -38,7 +45,7 @@ class MarketplaceCoreFront
      * @param int $id
      * @return string
      */
-    protected function getSellerName(int $id): string
+    public function getSellerName(int $id): string
     {
         $supplier = new Supplier($id);
 
