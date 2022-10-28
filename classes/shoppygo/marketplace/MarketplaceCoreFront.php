@@ -35,6 +35,13 @@ class MarketplaceCoreFront
     {
     }
 
+    public function findSellerByProduct($id_product): array
+    {
+        return $this->getSellerProductRepository()
+            ->findSellersByProducts([$id_product])
+        ;
+    }
+
     public function getProductTotalBySeller(array $products)
     {
         $seller_product = $this->getSellersProduct($products);
@@ -48,8 +55,6 @@ class MarketplaceCoreFront
             $total_product = 0;
             $total_product = array_map(
                 function ($p) use (&$total_product) {
-
-
                     //TODO $total = $p['total'] ?? $p['total_price_tax_incl'];  is not correct:
                     //      $p['total'] when customer insert order
                     //      $p['total_price_tax_incl'] when splitting orde. This is an error
@@ -91,9 +96,7 @@ class MarketplaceCoreFront
             $products
         );
 
-        $repo = new MarketplaceSellerProductRepository(
-            $this->registry->getConnection(), _DB_PREFIX_
-        );
+        $repo = $this->getSellerProductRepository();
 
         return $repo->qbProductSupplier($ids)
             ->select('ps.id_supplier as id_seller, ps.id_product')
@@ -117,6 +120,13 @@ class MarketplaceCoreFront
         }
 
         return $shipping_cost_by_seller;
+    }
+
+    private function getSellerProductRepository(): MarketplaceSellerProductRepository
+    {
+        return new MarketplaceSellerProductRepository(
+            $this->registry->getConnection(), _DB_PREFIX_
+        );
     }
 
 }
