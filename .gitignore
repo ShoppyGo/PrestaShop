@@ -18,7 +18,7 @@
 /src
 /templates
 /tests
-/themes
+/themes/*
 /tools
 /translations
 /upload
@@ -69,3 +69,5 @@ Makefile
 #ShoppyGo
 !classes/shoppygo
 !override/classes/PaymentModule.php
+!themes/classic/templates/catalog/product.tpl
+!src/ShoppyGo
