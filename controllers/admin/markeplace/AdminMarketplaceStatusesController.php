@@ -44,18 +44,4 @@ class AdminMarketplaceStatusesControllerCore extends AdminStatusesControllerCore
         return $res;
     }
 
-//    protected function initOrderStatusList(): void
-//    {
-//        parent::initOrderStatusList();
-//        $this->fields_list['is_seller'] = [
-//            'title' => $this->trans('Is seller', [], 'Admin.Global'),
-//            'align' => 'text-center',
-//            'active' => 'delivery',
-//            'type' => 'bool',
-//            'ajax' => true,
-//            'orderby' => false,
-//            'class' => 'fixed-width-sm',
-//        ];
-//    }
-
 }
