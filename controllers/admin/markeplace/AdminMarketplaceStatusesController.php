@@ -28,8 +28,7 @@ use PrestaShop\PrestaShop\Core\Hook\HookDispatcher;
 class AdminMarketplaceStatusesControllerCore extends AdminStatusesControllerCore
 {
     public function postProcess()
-    {  //TODO admin controller is legacy.
-        xdebug_break();
+    {
         $res = parent::postProcess();
         $id_order_state = Tools::getValue('id_order_state');
         if(false !== $id_order_state) {
