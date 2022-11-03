@@ -23,6 +23,7 @@
  * @copyright Since 2022 Bwlab of Luigi Massa and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+
 use PrestaShop\PrestaShop\Core\Hook\HookDispatcher;
 
 class AdminMarketplaceStatusesControllerCore extends AdminStatusesControllerCore
@@ -31,16 +32,30 @@ class AdminMarketplaceStatusesControllerCore extends AdminStatusesControllerCore
     {
         $res = parent::postProcess();
         $id_order_state = Tools::getValue('id_order_state');
-        if(false !== $id_order_state) {
+        if (false !== $id_order_state) {
             /** @var HookDispatcher $hookDispatcher */
             $hookDispatcher = $this->get('prestashop.core.hook.dispatcher');
             $hookDispatcher->dispatchWithParameters('marketPlaceAdminStatusOrderPostProcess', [
                 'id_order_state' => $id_order_state,
-                'is_seller'   => (bool)Tools::getValue('is_seller'),
+                'is_seller'      => (bool)Tools::getValue('is_seller'),
             ]);
         }
 
         return $res;
     }
+
+//    protected function initOrderStatusList(): void
+//    {
+//        parent::initOrderStatusList();
+//        $this->fields_list['is_seller'] = [
+//            'title' => $this->trans('Is seller', [], 'Admin.Global'),
+//            'align' => 'text-center',
+//            'active' => 'delivery',
+//            'type' => 'bool',
+//            'ajax' => true,
+//            'orderby' => false,
+//            'class' => 'fixed-width-sm',
+//        ];
+//    }
 
 }
