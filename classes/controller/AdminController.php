@@ -3105,7 +3105,9 @@ class AdminControllerCore extends Controller
         $limit = null,
         $id_lang_shop = false
     ) {
-        Hook::exec('action' . $this->controller_name . 'ListingFieldsModifier', [
+        $this->hookDispatcher = $this->get('prestashop.core.hook.dispatcher');
+
+        $this->hookDispatcher->dispatchWithParameters('action' . $this->controller_name . 'ListingFieldsModifier', [
             'select' => &$this->_select,
             'join' => &$this->_join,
             'where' => &$this->_where,
@@ -3250,8 +3252,7 @@ class AdminControllerCore extends Controller
                 break;
             }
         } while (empty($this->_list));
-
-        Hook::exec('action' . $this->controller_name . 'ListingResultsModifier', [
+        $this->hookDispatcher->dispatchWithParameters('action' . $this->controller_name . 'ListingResultsModifier', [
             'list' => &$this->_list,
             'list_total' => &$this->_listTotal,
         ]);
