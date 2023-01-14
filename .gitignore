@@ -68,6 +68,10 @@ Makefile
 
 #ShoppyGo
 !classes/shoppygo
+!classes/marketplace
+!classes/PrestaShopAutoload.php
 !override/classes/PaymentModule.php
 !themes/classic/templates/catalog/product.tpl
 !src/ShoppyGo
+!config/autoload.php
+
