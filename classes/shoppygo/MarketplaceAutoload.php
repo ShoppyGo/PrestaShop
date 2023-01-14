@@ -106,7 +106,7 @@ class MarketplaceAutoload extends PrestaShopAutoload
 
     private function replaceControllerCore(array $classes): array
     {
-        $classes['HistoryControllerCore']['path'] = 'controllers/front/marketplace/MarketplaceHistoryController.php';
+        $classes['HistoryControllerCore']['path'] = 'controllers/front/shoppygo/marketplace/MarketplaceHistoryController.php';
         $classes['OrderCore']['path'] = 'classes/shoppygo/markeplace/MarketplaceOrderCore.php';
         return $classes;
     }
