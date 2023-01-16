@@ -219,9 +219,15 @@ class MarketplaceAutoload extends PrestaShopAutoload
 
     private function replaceControllerCore(array $classes): array
     {
+
+        #controllers
         $classes['HistoryControllerCore']['marketplace'] = true;
         $classes['HistoryControllerCore']['controller'] = true;
 
+        $classes['AdminStatusesControllerCore']['marketplace'] = true;
+        $classes['AdminStatusesControllerCore']['controller'] = true;
+
+        #classes
         $classes['OrderCore']['marketplace'] = true;
         $classes['OrderCore']['controller'] = false;
 
