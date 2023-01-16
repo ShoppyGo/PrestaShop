@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright since 2022 Bwlab of Luigi Massa and Contributors
  * Bwlab of Luigi Massa is an Italy Company
