@@ -26,6 +26,7 @@
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use ShoppyGo\MarketplaceBundle\Entity\MarketplaceSellerShipping;
+use ShoppyGo\MarketplaceBundle\Repository\MarketplaceSellerOrderRepository;
 use ShoppyGo\MarketplaceBundle\Repository\MarketplaceSellerProductRepository;
 
 class MarketplaceCoreFront
@@ -120,6 +121,16 @@ class MarketplaceCoreFront
         }
 
         return $shipping_cost_by_seller;
+    }
+
+    public function isMainOrder(int $id_order): bool
+    {
+        $order = $this->registry->getConnection()->executeQuery(
+            'SELECT id_order FROM ' . _DB_PREFIX_ . 'marketplace_seller_order WHERE id_order_main = :id_order',
+            ['id_order' => $id_order]
+        );
+        return $order->rowCount() > 0;
+
     }
 
     private function getSellerProductRepository(): MarketplaceSellerProductRepository
