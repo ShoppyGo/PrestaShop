@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2022 Bwlab of Luigi Massa and Contributors
  * Bwlab of Luigi Massa is an Italy Company
@@ -26,6 +27,7 @@
 class MarketplaceAutoload extends PrestaShopAutoload
 {
     private $front_controller_shoppygo = 'controllers/front/shoppygo/marketplace/';
+    private $admin_controller_shoppygo = 'controllers/admin/shoppygo/marketplace/';
     private $classes_shoppygo_marketplace = 'classes/shoppygo/marketplace/';
 
     public function generateIndex()
@@ -183,17 +185,6 @@ class MarketplaceAutoload extends PrestaShopAutoload
         return $marketplacePrefixClass;
     }
 
-    private function loadMarketplaceCoreClass(string $className, string $classDir): void
-    {
-        if ($this->isMarketplaceClass($className) === true) {
-            if ($this->isControllerClass($className) === true) {
-                require_once $classDir.$this->front_controller_shoppygo.'Marketplace'.$className.'.php';
-            } else {
-                require_once $classDir.$this->classes_shoppygo_marketplace.'Marketplace'.$className.'.php';
-            }
-        }
-    }
-
     private function isControllerClass($classname)
     {
         if (isset($this->index[$classname.'Core']['controller']) === false) {
@@ -212,6 +203,19 @@ class MarketplaceAutoload extends PrestaShopAutoload
         return $this->index[$classname.'Core']['marketplace'] === true;
     }
 
+    private function loadMarketplaceCoreClass(string $className, string $classDir): void
+    {
+        if ($this->isMarketplaceClass($className) === true) {
+            if ($this->isControllerClass($className) === true) {
+                if (strpos($className, 'Admin') === false) {
+                    require_once $classDir.$this->front_controller_shoppygo.'Marketplace'.$className.'.php';
+                } else {
+                    require_once $classDir.$this->admin_controller_shoppygo.'Marketplace'.$className.'.php';
+                }
+            }
+        }
+    }
+
     private function normalizeDirectory($directory)
     {
         return rtrim($directory, '/\\').DIRECTORY_SEPARATOR;
@@ -219,7 +223,6 @@ class MarketplaceAutoload extends PrestaShopAutoload
 
     private function replaceControllerCore(array $classes): array
     {
-
         #controllers
         $classes['HistoryControllerCore']['marketplace'] = true;
         $classes['HistoryControllerCore']['controller'] = true;
