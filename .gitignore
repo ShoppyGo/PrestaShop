@@ -1,5 +1,5 @@
-/admin-dev
 /app
+/admin-dev
 /bin
 /cache
 /classes/*
@@ -74,4 +74,4 @@ Makefile
 !themes/classic/templates/catalog/product.tpl
 !src/ShoppyGo
 !config/autoload.php
-
+!app/Resources
