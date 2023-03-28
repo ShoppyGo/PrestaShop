@@ -1,4 +1,4 @@
-/app
+/app/**
 /admin-dev
 /bin
 /cache
@@ -75,3 +75,6 @@ Makefile
 !src/ShoppyGo
 !config/autoload.php
 !app/Resources
+app/Resources/*
+!app/Resources/PrestaShopBundle
+!app/Resources/PrestaShopBundle/**/*
