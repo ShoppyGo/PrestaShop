@@ -73,7 +73,10 @@ Makefile
 !override/classes/PaymentModule.php
 !themes/classic/templates/catalog/product.tpl
 !src/ShoppyGo
+!src/ShoppyGo/dashboard-app
+!src/ShoppyGo/dashboard-app/**/*
 !config/autoload.php
+!app/AppKernel.php
 !app/Resources
 app/Resources/*
 !app/Resources/PrestaShopBundle
