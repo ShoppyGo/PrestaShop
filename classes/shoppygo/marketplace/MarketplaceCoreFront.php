@@ -126,7 +126,7 @@ class MarketplaceCoreFront
     public function isMainOrder(int $id_order): bool
     {
         $order = $this->registry->getConnection()->executeQuery(
-            'SELECT id_order FROM ' . _DB_PREFIX_ . 'marketplace_seller_order WHERE id_order_main = :id_order',
+            'SELECT id_order FROM ' . _DB_PREFIX_ . 'marketplace_seller_order WHERE id_order <> :id_order and id_order_main = :id_order',
             ['id_order' => $id_order]
         );
         return $order->rowCount() > 0;
