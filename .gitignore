@@ -4,7 +4,7 @@
 /cache
 /classes/*
 /config
-/controllers
+/controllers/*
 /docs
 /download
 /img
@@ -85,6 +85,14 @@ app/config/*
 !classes/marketplace
 !classes/PrestaShopAutoload.php
 !config/autoload.php
+!controllers/admin/
+controllers/admin/*
+!controllers/admin/shoppygo
+!controllers/front/
+controllers/front/*
+!controllers/front/shoppygo
+
+
 
 !src/Adapter
 src/Adapter/*
