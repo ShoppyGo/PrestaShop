@@ -77,6 +77,7 @@ app/Resources/*
 !app/config
 app/config/*
 !app/config/routing.yml
+!app/config/config_legacy.yml
 
 
 
