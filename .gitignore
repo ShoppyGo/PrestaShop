@@ -41,7 +41,7 @@ robots.txt
 
 .htaccess
 error500.html
-composer.json
+!composer.json
 composer.lock
 CONTRIBUTING.md
 CONTRIBUTORS.md
