@@ -98,4 +98,6 @@ src/Adapter/Product/*
 
 !override/classes/PaymentModule.php
 !themes/classic/templates/catalog/product.tpl
+!themes/classic/templates/catalog/_partials/miniatures/product.tpl
+!themes/classic/templates/checkout/_partials/cart-detailed-product-line.tpl
 

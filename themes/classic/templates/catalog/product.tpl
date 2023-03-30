@@ -24,6 +24,7 @@
  *}
 {extends file=$layout}
 
+
 {block name='head' append}
   <meta property="og:type" content="product">
   {if $product.cover}
@@ -84,8 +85,10 @@
             {block name='product_description_short'}
               <div id="product-description-short-{$product.id}" class="product-description">{$product.description_short nofilter}</div>
             {/block}
+
               {widget name="shoppygomarketplaceproduct" hook='displaySellerProductDetail' id_product=$product.id}
-            {if $product.is_customizable && count($product.customizations.fields)}
+
+              {if $product.is_customizable && count($product.customizations.fields)}
               {block name='product_customization'}
                 {include file="catalog/_partials/product-customization.tpl" customizations=$product.customizations}
               {/block}

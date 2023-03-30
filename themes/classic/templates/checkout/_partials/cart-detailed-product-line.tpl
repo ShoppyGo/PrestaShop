@@ -115,6 +115,7 @@
       <br/>
       {widget name="shoppygomarketplaceproduct" hook='displaySellerProductDetail' id_product=$product.id}
 
+
   </div>
 
   <!--  product line right content: actions (quantity, delete), price -->

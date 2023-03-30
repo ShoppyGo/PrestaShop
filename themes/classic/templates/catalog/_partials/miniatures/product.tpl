@@ -76,6 +76,7 @@
         {/block}
           {widget name="shoppygomarketplaceproduct" hook='displaySellerProductDetail' id_product=$product.id}
 
+
         {block name='product_price_and_shipping'}
           {if $product.show_price}
             <div class="product-price-and-shipping">
