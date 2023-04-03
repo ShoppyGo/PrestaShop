@@ -116,8 +116,15 @@ class MarketplaceCoreFront
         foreach ($total_by_seller as $seller => $total_products) {
             $repo = $this->registry->getRepository(MarketplaceSellerShipping::class);
             $shipping_cost = $repo->findRange($seller, $total_products);
-
-            $shipping_cost_by_seller[$seller] = $shipping_cost ? (float)$shipping_cost->getCost() : 0;
+            $carrier_name = $shipping_cost->getCarrierName();
+                if(false === array_key_exists($seller, $shipping_cost_by_seller)){
+                    $shipping_cost_by_seller[$seller]=[];
+                }
+                if(false === array_key_exists($carrier_name, $shipping_cost_by_seller[$seller])){
+                    $shipping_cost_by_seller[$seller][$carrier_name]=0;
+                }
+            // TODO add carrier name
+            $shipping_cost_by_seller[$seller][$carrier_name] += $shipping_cost ? (float)$shipping_cost->getCost() : 0;
         }
 
         return $shipping_cost_by_seller;
@@ -125,12 +132,15 @@ class MarketplaceCoreFront
 
     public function isMainOrder(int $id_order): bool
     {
-        $order = $this->registry->getConnection()->executeQuery(
-            'SELECT id_order FROM ' . _DB_PREFIX_ . 'marketplace_seller_order WHERE id_order <> :id_order and id_order_main = :id_order',
-            ['id_order' => $id_order]
-        );
-        return $order->rowCount() > 0;
+        $order = $this->registry->getConnection()
+            ->executeQuery(
+                'SELECT id_order FROM '._DB_PREFIX_.
+                'marketplace_seller_order WHERE id_order <> :id_order and id_order_main = :id_order',
+                ['id_order' => $id_order]
+            )
+        ;
 
+        return $order->rowCount() > 0;
     }
 
     private function getSellerProductRepository(): MarketplaceSellerProductRepository
