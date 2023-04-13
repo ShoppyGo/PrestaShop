@@ -73,12 +73,16 @@
 
       <div class="col-md-8 d-print-block right-column">
         <div id="orderProductsOriginalPosition">
-          {% include '@PrestaShop/Admin/Sell/Order/Order/Blocks/View/products.html.twig' %}
+          {#        override default block #}
+          {# {% include '@PrestaShop/Admin/Sell/Order/Order/Blocks/View/products.html.twig' %}#}
+          {% include
+            '@ShoppyGoMarketplace/overrides/admin_sell_order_order_blocks_views_products.html.twig' %}
+          {#          #}
         </div>
-{#        override default block#}
-{#        {% include '@PrestaShop/Admin/Sell/Order/Order/Blocks/View/details.html.twig' %}#}
+        {#        override default block#}
+        {# {% include '@PrestaShop/Admin/Sell/Order/Order/Blocks/View/details.html.twig' %}#}
         {% include '@ShoppyGoMarketplace/overrides/admin_sell_order_order_blocks_views_details.html.twig' %}
-{#        #}
+      {#        #}
         {{ renderhook('displayAdminOrderMain', {'id_order': orderForViewing.id}) }}
         {% if orderForViewing.getMarketplaceCore().isEmployeeSeller() == false %}
           {% include '@PrestaShop/Admin/Sell/Order/Order/Blocks/View/payments.html.twig' %}
