@@ -25,9 +25,10 @@
  */
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use ShoppyGo\MarketplaceBundle\Entity\MarketplaceSeller;
 use ShoppyGo\MarketplaceBundle\Entity\MarketplaceSellerShipping;
-use ShoppyGo\MarketplaceBundle\Repository\MarketplaceSellerOrderRepository;
 use ShoppyGo\MarketplaceBundle\Repository\MarketplaceSellerProductRepository;
+use ShoppyGo\MarketplaceBundle\Repository\MarketplaceSellerRepository;
 
 class MarketplaceCoreFront
 {
@@ -40,6 +41,13 @@ class MarketplaceCoreFront
     {
         return $this->getSellerProductRepository()
             ->findSellersByProducts([$id_product])
+        ;
+    }
+
+    public function getMarketplaceSellerData(int $id): MarketplaceSeller
+    {
+        return $this->getMarketplaceSellerRepository()
+            ->find($id)
         ;
     }
 
@@ -77,9 +85,7 @@ class MarketplaceCoreFront
      */
     public function getSellerName(int $id): string
     {
-        $supplier = new Supplier($id);
-
-        return $supplier->name;
+        return (new Supplier($id))->name;
     }
 
     /**
@@ -117,12 +123,12 @@ class MarketplaceCoreFront
             $repo = $this->registry->getRepository(MarketplaceSellerShipping::class);
             $shipping_cost = $repo->findRange($seller, $total_products);
             $carrier_name = $shipping_cost->getCarrierName();
-                if(false === array_key_exists($seller, $shipping_cost_by_seller)){
-                    $shipping_cost_by_seller[$seller]=[];
-                }
-                if(false === array_key_exists($carrier_name, $shipping_cost_by_seller[$seller])){
-                    $shipping_cost_by_seller[$seller][$carrier_name]=0;
-                }
+            if (false === array_key_exists($seller, $shipping_cost_by_seller)) {
+                $shipping_cost_by_seller[$seller] = [];
+            }
+            if (false === array_key_exists($carrier_name, $shipping_cost_by_seller[$seller])) {
+                $shipping_cost_by_seller[$seller][$carrier_name] = 0;
+            }
             // TODO add carrier name
             $shipping_cost_by_seller[$seller][$carrier_name] += $shipping_cost ? (float)$shipping_cost->getCost() : 0;
         }
@@ -141,6 +147,11 @@ class MarketplaceCoreFront
         ;
 
         return $order->rowCount() > 0;
+    }
+
+    private function getMarketplaceSellerRepository(): MarketplaceSellerRepository
+    {
+        return $this->registry->getRepository(MarketplaceSeller::class);
     }
 
     private function getSellerProductRepository(): MarketplaceSellerProductRepository
