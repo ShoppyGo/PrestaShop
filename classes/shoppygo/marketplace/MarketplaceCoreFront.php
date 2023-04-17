@@ -115,25 +115,35 @@ class MarketplaceCoreFront
 
     public function getTotalShippingBySeller(array $products): array
     {
-        $total_by_seller = $this->getProductTotalBySeller($products);
 
-        $shipping_cost_by_seller = [];
+        $shippingRepository = $this->registry->getRepository(MarketplaceSellerShipping::class);
+        $productsTotalBySeller = $this->getProductTotalBySeller($products);
+        $shopAddress = $this->context->shop->getAddress();
 
-        foreach ($total_by_seller as $seller => $total_products) {
-            $repo = $this->registry->getRepository(MarketplaceSellerShipping::class);
-            $shipping_cost = $repo->findRange($seller, $total_products);
-            $carrier_name = $shipping_cost->getCarrierName();
-            if (false === array_key_exists($seller, $shipping_cost_by_seller)) {
-                $shipping_cost_by_seller[$seller] = [];
+        $shippingCostsBySeller = [];
+
+        foreach ($productsTotalBySeller as $sellerId => $totalProducts) {
+            $shippingCost = $shippingRepository->findRange($sellerId, $totalProducts);
+            $carrierName = $shippingCost->getCarrierName();
+
+            // Initialize seller and carrierName in shippingCostsBySeller array
+            if (!isset($shippingCostsBySeller[$sellerId][$carrierName])) {
+                $shippingCostsBySeller[$sellerId][$carrierName] = 0;
             }
-            if (false === array_key_exists($carrier_name, $shipping_cost_by_seller[$seller])) {
-                $shipping_cost_by_seller[$seller][$carrier_name] = 0;
+
+            if (!$shippingCost) {
+                continue;
             }
-            // TODO add carrier name
-            $shipping_cost_by_seller[$seller][$carrier_name] += $shipping_cost ? (float)$shipping_cost->getCost() : 0;
+
+            $taxCalculator = TaxManagerFactory::getManager($shopAddress, $shippingCost->getIdTaxRulesGroup())
+                ->getTaxCalculator()
+            ;
+            $taxRate = 1 + ((float)$taxCalculator->getTotalRate() / 100);
+
+            $shippingCostsBySeller[$sellerId][$carrierName] += (float)$shippingCost->getCost() * $taxRate;
         }
 
-        return $shipping_cost_by_seller;
+        return $shippingCostsBySeller;
     }
 
     public function isMainOrder(int $id_order): bool
