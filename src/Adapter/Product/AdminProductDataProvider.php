@@ -26,7 +26,6 @@
 
 namespace PrestaShop\PrestaShop\Adapter\Product;
 
-use AppKernel;
 use Configuration;
 use Context;
 use Currency;
@@ -38,6 +37,7 @@ use PrestaShop\PrestaShop\Adapter\Admin\AbstractAdminQueryBuilder;
 use PrestaShop\PrestaShop\Adapter\ImageManager;
 use PrestaShop\PrestaShop\Adapter\Validate;
 use PrestaShop\PrestaShop\Core\Hook\HookDispatcherInterface;
+use PrestaShop\PrestaShop\Core\Version;
 use PrestaShopBundle\Entity\AdminFilter;
 use PrestaShopBundle\Service\DataProvider\Admin\ProductInterface;
 use Product;
@@ -46,6 +46,8 @@ use StockAvailable;
 use Tools;
 
 /**
+ * @deprecated since 8.1 and will be removed in next major.
+ *
  * Data provider for new Architecture, about Product object model.
  *
  * This class will provide data from DB / ORM about Products for the Admin interface.
@@ -70,11 +72,12 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
     private $cache;
 
     public function __construct(
-        EntityManager $entityManager,
-        ImageManager $imageManager,
-        CacheItemPoolInterface $cache,
+        EntityManager           $entityManager,
+        ImageManager            $imageManager,
+        CacheItemPoolInterface  $cache,
         HookDispatcherInterface $hookDispatcher
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->imageManager = $imageManager;
         $this->cache = $cache;
@@ -84,114 +87,18 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
     /**
      * {@inheritdoc}
      */
-    public function getPersistedFilterParameters()
+    public function countAllProducts()
     {
-        $employee = Context::getContext()->employee;
-        $employeeId = $employee->id ?: 0;
+        $idShop = Context::getContext()->shop->id;
 
-        $cachedFilters = $this->cache->getItem("app.product_filters_${employeeId}");
+        $query = new DbQuery();
+        $query->select('COUNT(ps.id_product)');
+        $query->from('product_shop', 'ps');
+        $query->where('ps.id_shop = ' . (int)$idShop);
 
-        if (!$cachedFilters->isHit()) {
-            $shop = Context::getContext()->shop;
-            /** @var AdminFilter|null $filter */
-            $filter = $this->entityManager->getRepository(AdminFilter::class)->findOneBy([
-                'employee' => $employeeId,
-                'shop' => $shop->id ?: 0,
-                'controller' => 'ProductController',
-                'action' => 'catalogAction',
-            ]);
+        $total = Db::getInstance()->getValue($query);
 
-            if (null === $filter) {
-                $filters = AdminFilter::getProductCatalogEmptyFilter();
-            } else {
-                $filters = $filter->getProductCatalogFilter();
-            }
-
-            $cachedFilters->set($filters);
-            $this->cache->save($cachedFilters);
-        }
-
-        return $cachedFilters->get();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isCategoryFiltered()
-    {
-        $filters = $this->getPersistedFilterParameters();
-
-        return !empty($filters['filter_category']) && $filters['filter_category'] > 0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isColumnFiltered()
-    {
-        $filters = $this->getPersistedFilterParameters();
-        foreach ($filters as $filterKey => $filterValue) {
-            if (strpos($filterKey, 'filter_column_') === 0 && $filterValue !== '') {
-                return true; // break at first column filter found
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function persistFilterParameters(array $parameters)
-    {
-        $employee = Context::getContext()->employee;
-        $shop = Context::getContext()->shop;
-        /** @var AdminFilter|null $filter */
-        $filter = $this->entityManager->getRepository(AdminFilter::class)->findOneBy([
-            'employee' => $employee->id ?: 0,
-            'shop' => $shop->id ?: 0,
-            'controller' => 'ProductController',
-            'action' => 'catalogAction',
-        ]);
-
-        if (!$filter) {
-            $filter = new AdminFilter();
-            $filter->setEmployee($employee->id ?: 0)->setShop($shop->id ?: 0)->setController('ProductController')->setAction('catalogAction');
-        }
-
-        $filter->setProductCatalogFilter($parameters);
-        $this->entityManager->persist($filter);
-
-        // if each filter is == '', then remove item from DB :)
-        if (count(array_diff($filter->getProductCatalogFilter(), [''])) == 0) {
-            $this->entityManager->remove($filter);
-        }
-
-        $this->entityManager->flush();
-
-        // Flush cache
-        $employee = Context::getContext()->employee;
-        $employeeId = $employee->id ?: 0;
-
-        $this->cache->deleteItem("app.product_filters_{$employeeId}");
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function combinePersistentCatalogProductFilter($paramsIn = [], $avoidPersistence = false)
-    {
-        // retrieve persisted filter parameters
-        $persistedParams = $this->getPersistedFilterParameters();
-        // merge with new values
-        $paramsOut = array_merge($persistedParams, (array) $paramsIn);
-        // persist new values
-        if (!$avoidPersistence) {
-            $this->persistFilterParameters($paramsOut);
-        }
-
-        // return new values
-        return $paramsOut;
+        return (int)$total;
     }
 
     /**
@@ -205,9 +112,10 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
         $post = [],
         $avoidPersistence = false,
         $formatCldr = true
-    ) {
-        $offset = (int) $offset;
-        $limit = (int) $limit;
+    )
+    {
+        $offset = (int)$offset;
+        $limit = (int)$limit;
         $orderBy = Validate::isOrderBy($orderBy) ? $orderBy : 'id_product';
         $sortOrder = Validate::isOrderWay($sortOrder) ? $sortOrder : 'desc';
 
@@ -307,7 +215,7 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
 
         // Column 'position' added if filtering by category
         if ($showPositionColumn) {
-            $filteredCategoryId = (int) $filterParams['filter_category'];
+            $filteredCategoryId = (int)$filterParams['filter_category'];
             $sqlSelect['position'] = ['table' => 'cp', 'field' => 'position'];
             $sqlTable['cp'] = [
                 'table' => 'category_product',
@@ -340,6 +248,7 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
             // for 'filter_category', see next if($showPositionColumn) block.
         }
         $sqlWhere[] = 'state = ' . Product::STATE_SAVED;
+
         // exec legacy hook but with different parameters (retro-compat < 1.7 is broken here)
         $this->hookDispatcher->dispatchWithParameters('actionAdminProductsListingFieldsModifier', [
             '_ps_version' => AppKernel::VERSION,
@@ -357,7 +266,7 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
         $total = $total[0]['FOUND_ROWS()'];
 
         // post treatment
-        $currency = new Currency((int) Configuration::get('PS_CURRENCY_DEFAULT'));
+        $currency = Currency::getDefaultCurrency();
         $localeCldr = Tools::getContextLocale(Context::getContext());
 
         /**
@@ -390,14 +299,14 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
             $product['image'] = $this->imageManager->getThumbnailForListing($product['id_image']);
             $product['image_link'] = Context::getContext()->link->getImageLink(
                 $product['link_rewrite'],
-                (string) $product['id_image']
+                (string)$product['id_image']
             );
         }
 
         // post treatment by hooks
         // exec legacy hook but with different parameters (retro-compat < 1.7 is broken here)
         Hook::exec('actionAdminProductsListingResultsModifier', [
-            '_ps_version' => AppKernel::VERSION,
+            '_ps_version' => Version::VERSION,
             'products' => &$products,
             'total' => $total,
         ]);
@@ -408,38 +317,66 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
     /**
      * {@inheritdoc}
      */
-    public function countAllProducts()
+    public function combinePersistentCatalogProductFilter($paramsIn = [], $avoidPersistence = false)
     {
-        $idShop = Context::getContext()->shop->id;
+        // retrieve persisted filter parameters
+        $persistedParams = $this->getPersistedFilterParameters();
+        // merge with new values
+        $paramsOut = array_merge($persistedParams, (array)$paramsIn);
+        // persist new values
+        if (!$avoidPersistence) {
+            $this->persistFilterParameters($paramsOut);
+        }
 
-        $query = new DbQuery();
-        $query->select('COUNT(ps.id_product)');
-        $query->from('product_shop', 'ps');
-        $query->where('ps.id_shop = ' . (int) $idShop);
-
-        $total = Db::getInstance()->getValue($query);
-
-        return (int) $total;
+        // return new values
+        return $paramsOut;
     }
 
     /**
-     * Translates new Core route parameters into their Legacy equivalent.
-     *
-     * @param string[] $coreParameters The new Core route parameters
-     *
-     * @return array<string, int|string> The URL parameters for Legacy URL (GETs)
+     * {@inheritdoc}
      */
-    public function mapLegacyParametersProductForm($coreParameters = [])
+    public function persistFilterParameters(array $parameters)
     {
-        $params = [];
-        if ($coreParameters['id'] == '0') {
-            $params['addproduct'] = 1;
-        } else {
-            $params['updateproduct'] = 1;
-            $params['id_product'] = $coreParameters['id'];
+        $employee = Context::getContext()->employee;
+        $shop = Context::getContext()->shop;
+        /** @var AdminFilter|null $filter */
+        $filter = $this->entityManager->getRepository(AdminFilter::class)->findOneBy([
+            'employee' => $employee->id ?: 0,
+            'shop' => $shop->id ?: 0,
+            'controller' => 'ProductController',
+            'action' => 'catalogAction',
+        ]);
+
+        if (!$filter) {
+            $filter = new AdminFilter();
+            $filter->setEmployee($employee->id ?: 0)->setShop($shop->id ?: 0)->setController('ProductController')->setAction('catalogAction');
         }
 
-        return $params;
+        $filter->setProductCatalogFilter($parameters);
+        $this->entityManager->persist($filter);
+
+        // if each filter is == '', then remove item from DB :)
+        if (count(array_diff($filter->getProductCatalogFilter(), [''])) == 0) {
+            $this->entityManager->remove($filter);
+        }
+
+        $this->entityManager->flush();
+
+        //Flush cache
+        $employee = Context::getContext()->employee;
+        $employeeId = $employee->id ?: 0;
+
+        $this->cache->deleteItem("app.product_filters_${employeeId}");
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isCategoryFiltered()
+    {
+        $filters = $this->getPersistedFilterParameters();
+
+        return !empty($filters['filter_category']) && $filters['filter_category'] > 0;
     }
 
     /**
@@ -464,8 +401,76 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
     /**
      * {@inheritdoc}
      */
+    public function isColumnFiltered()
+    {
+        $filters = $this->getPersistedFilterParameters();
+        foreach ($filters as $filterKey => $filterValue) {
+            if (strpos($filterKey, 'filter_column_') === 0 && $filterValue !== '') {
+                return true; // break at first column filter found
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPersistedFilterParameters()
+    {
+        $employee = Context::getContext()->employee;
+        $employeeId = $employee->id ?: 0;
+
+        $cachedFilters = $this->cache->getItem("app.product_filters_${employeeId}");
+
+        if (!$cachedFilters->isHit()) {
+            $shop = Context::getContext()->shop;
+            /** @var AdminFilter|null $filter */
+            $filter = $this->entityManager->getRepository(AdminFilter::class)->findOneBy([
+                'employee' => $employeeId,
+                'shop' => $shop->id ?: 0,
+                'controller' => 'ProductController',
+                'action' => 'catalogAction',
+            ]);
+
+            if (null === $filter) {
+                $filters = AdminFilter::getProductCatalogEmptyFilter();
+            } else {
+                $filters = $filter->getProductCatalogFilter();
+            }
+
+            $cachedFilters->set($filters);
+            $this->cache->save($cachedFilters);
+        }
+
+        return $cachedFilters->get();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function isNewProductDefaultActivated()
     {
-        return (bool) Configuration::get('PS_PRODUCT_ACTIVATION_DEFAULT');
+        return (bool)Configuration::get('PS_PRODUCT_ACTIVATION_DEFAULT');
+    }
+
+    /**
+     * Translates new Core route parameters into their Legacy equivalent.
+     *
+     * @param string[] $coreParameters The new Core route parameters
+     *
+     * @return array<string, int|string> The URL parameters for Legacy URL (GETs)
+     */
+    public function mapLegacyParametersProductForm($coreParameters = [])
+    {
+        $params = [];
+        if ($coreParameters['id'] == '0') {
+            $params['addproduct'] = 1;
+        } else {
+            $params['updateproduct'] = 1;
+            $params['id_product'] = $coreParameters['id'];
+        }
+
+        return $params;
     }
 }
