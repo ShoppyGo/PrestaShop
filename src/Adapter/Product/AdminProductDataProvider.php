@@ -72,9 +72,9 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
     private $cache;
 
     public function __construct(
-        EntityManager           $entityManager,
-        ImageManager            $imageManager,
-        CacheItemPoolInterface  $cache,
+        EntityManager          $entityManager,
+        ImageManager           $imageManager,
+        CacheItemPoolInterface $cache,
         HookDispatcherInterface $hookDispatcher
     )
     {

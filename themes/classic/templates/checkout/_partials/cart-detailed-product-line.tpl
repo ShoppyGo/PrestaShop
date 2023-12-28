@@ -30,7 +30,9 @@
         <img src="{$product.default_image.bySize.cart_default.url}" alt="{$product.name|escape:'quotes'}"
              loading="lazy">
 
+
 {else}
+
 
         <img src="{$urls.no_picture_image.bySize.cart_default.url}" loading="lazy"/>
       {/if}
