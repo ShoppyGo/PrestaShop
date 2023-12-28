@@ -24,13 +24,14 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
-use classes\shoppygo\MarketplaceAutoload;
+use PrestaShop\Autoload\PrestashopAutoload;
+use PrestaShop\PrestaShop\Core\Version;
 
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-define('_PS_VERSION_', AppKernel::VERSION);
+define('_PS_VERSION_', Version::VERSION);
 
-require_once _PS_CONFIG_DIR_.'alias.php';
-require_once _PS_CLASS_DIR_.'PrestaShopAutoload.php';
-require_once _PS_CLASS_DIR_.'shoppygo'.DIRECTORY_SEPARATOR.'MarketplaceAutoload.php';
-spl_autoload_register(array(\MarketplaceAutoload::getInstance(), 'load'));
+require_once _PS_CONFIG_DIR_ . 'alias.php';
+
+PrestashopAutoload::create(_PS_ROOT_DIR_, _PS_CACHE_DIR_)
+    ->register();
