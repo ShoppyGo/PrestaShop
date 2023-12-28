@@ -27,9 +27,12 @@
   <div class="product-line-grid-left col-md-3 col-xs-4">
     <span class="product-image media-middle">
       {if $product.default_image}
-        <img src="{$product.default_image.bySize.cart_default.url}" alt="{$product.name|escape:'quotes'}" loading="lazy">
-      {else}
-        <img src="{$urls.no_picture_image.bySize.cart_default.url}" loading="lazy" />
+        <img src="{$product.default_image.bySize.cart_default.url}" alt="{$product.name|escape:'quotes'}"
+             loading="lazy">
+
+{else}
+
+        <img src="{$urls.no_picture_image.bySize.cart_default.url}" loading="lazy"/>
       {/if}
     </span>
   </div>
@@ -37,7 +40,8 @@
   <!--  product line body: label, discounts, price, attributes, customizations -->
   <div class="product-line-grid-body col-md-4 col-xs-8">
     <div class="product-line-info">
-      <a class="label" href="{$product.url}" data-id_customization="{$product.id_customization|intval}">{$product.name}</a>
+      <a class="label" href="{$product.url}"
+         data-id_customization="{$product.id_customization|intval}">{$product.name}</a>
     </div>
     <div class="product-line-info product-price h5 {if $product.has_discount}has-discount{/if}">
       {if $product.has_discount}
@@ -76,12 +80,16 @@
       <br>
       {block name='cart_detailed_product_line_customization'}
         {foreach from=$product.customizations item="customization"}
-          <a href="#" data-toggle="modal" data-target="#product-customizations-modal-{$customization.id_customization}">{l s='Product customization' d='Shop.Theme.Catalog'}</a>
-          <div class="modal fade customization-modal js-customization-modal" id="product-customizations-modal-{$customization.id_customization}" tabindex="-1" role="dialog" aria-hidden="true">
+          <a href="#" data-toggle="modal"
+             data-target="#product-customizations-modal-{$customization.id_customization}">{l s='Product customization' d='Shop.Theme.Catalog'}</a>
+          <div class="modal fade customization-modal js-customization-modal"
+               id="product-customizations-modal-{$customization.id_customization}" tabindex="-1" role="dialog"
+               aria-hidden="true">
             <div class="modal-dialog" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-label="{l s='Close' d='Shop.Theme.Global'}">
+                  <button type="button" class="close" data-dismiss="modal"
+                          aria-label="{l s='Close' d='Shop.Theme.Global'}">
                     <span aria-hidden="true">&times;</span>
                   </button>
                   <h4 class="modal-title">{l s='Product customization' d='Shop.Theme.Catalog'}</h4>
@@ -112,8 +120,8 @@
         {/foreach}
       {/block}
     {/if}
-      <br/>
-      {widget name="shoppygomarketplaceproduct" hook='displaySellerProductDetail' id_product=$product.id}
+    <br/>
+    {widget name="shoppygomarketplaceproduct" hook='displaySellerProductDetail' id_product=$product.id}
 
 
   </div>
@@ -159,13 +167,13 @@
       <div class="col-md-2 col-xs-2 text-xs-right">
         <div class="cart-line-product-actions">
           <a
-              class                       = "remove-from-cart"
-              rel                         = "nofollow"
-              href                        = "{$product.remove_from_cart_url}"
-              data-link-action            = "delete-from-cart"
-              data-id-product             = "{$product.id_product|escape:'javascript'}"
-              data-id-product-attribute   = "{$product.id_product_attribute|escape:'javascript'}"
-              data-id-customization       = "{$product.id_customization|default|escape:'javascript'}"
+            class="remove-from-cart"
+            rel="nofollow"
+            href="{$product.remove_from_cart_url}"
+            data-link-action="delete-from-cart"
+            data-id-product="{$product.id_product|escape:'javascript'}"
+            data-id-product-attribute="{$product.id_product_attribute|escape:'javascript'}"
+            data-id-customization="{$product.id_customization|default|escape:'javascript'}"
           >
             {if empty($product.is_gift)}
               <i class="material-icons float-xs-left">delete</i>
