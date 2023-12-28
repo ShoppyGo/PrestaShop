@@ -40,15 +40,66 @@ class MarketplaceCoreFront
     public function findSellerByProduct($id_product): array
     {
         return $this->getSellerProductRepository()
-            ->findSellersByProducts([$id_product])
-        ;
+            ->findSellersByProducts([$id_product]);
+    }
+
+    private function getSellerProductRepository(): MarketplaceSellerProductRepository
+    {
+        return new MarketplaceSellerProductRepository(
+            $this->registry->getConnection(), _DB_PREFIX_
+        );
     }
 
     public function getMarketplaceSellerData(int $id): MarketplaceSeller
     {
         return $this->getMarketplaceSellerRepository()
-            ->find($id)
-        ;
+            ->find($id) ?? new MarketplaceSeller();
+    }
+
+    private function getMarketplaceSellerRepository(): MarketplaceSellerRepository
+    {
+        return $this->registry->getRepository(MarketplaceSeller::class);
+    }
+
+    /**
+     * @param int $id
+     * @return string
+     */
+    public function getSellerName(int $id): string
+    {
+        return (new Supplier($id))->name;
+    }
+
+    public function getTotalShippingBySeller(array $products): array
+    {
+
+        $shippingRepository = $this->registry->getRepository(MarketplaceSellerShipping::class);
+        $productsTotalBySeller = $this->getProductTotalBySeller($products);
+        $shopAddress = $this->context->shop->getAddress();
+
+        $shippingCostsBySeller = [];
+
+        foreach ($productsTotalBySeller as $sellerId => $totalProducts) {
+            $shippingCost = $shippingRepository->findRange($sellerId, $totalProducts);
+
+            if (!$shippingCost) continue;
+
+            $carrierName = $shippingCost->getCarrierName();
+
+            // Initialize seller and carrierName in shippingCostsBySeller array
+            if (!isset($shippingCostsBySeller[$sellerId][$carrierName])) {
+                $shippingCostsBySeller[$sellerId][$carrierName] = 0;
+            }
+
+
+            $taxCalculator = TaxManagerFactory::getManager($shopAddress, $shippingCost->getIdTaxRulesGroup())
+                ->getTaxCalculator();
+            $taxRate = 1 + ((float)$taxCalculator->getTotalRate() / 100);
+
+            $shippingCostsBySeller[$sellerId][$carrierName] += (float)$shippingCost->getCost() * $taxRate;
+        }
+
+        return $shippingCostsBySeller;
     }
 
     public function getProductTotalBySeller(array $products)
@@ -80,15 +131,6 @@ class MarketplaceCoreFront
     }
 
     /**
-     * @param int $id
-     * @return string
-     */
-    public function getSellerName(int $id): string
-    {
-        return (new Supplier($id))->name;
-    }
-
-    /**
      * @param array $products
      * @return array|mixed[][]
      * @throws \Doctrine\DBAL\Driver\Exception
@@ -109,66 +151,19 @@ class MarketplaceCoreFront
             ->select('ps.id_supplier as id_seller, ps.id_product')
             ->distinct('ps.id_product')
             ->execute()
-            ->fetchAllAssociative()
-        ;
-    }
-
-    public function getTotalShippingBySeller(array $products): array
-    {
-
-        $shippingRepository = $this->registry->getRepository(MarketplaceSellerShipping::class);
-        $productsTotalBySeller = $this->getProductTotalBySeller($products);
-        $shopAddress = $this->context->shop->getAddress();
-
-        $shippingCostsBySeller = [];
-
-        foreach ($productsTotalBySeller as $sellerId => $totalProducts) {
-            $shippingCost = $shippingRepository->findRange($sellerId, $totalProducts);
-            $carrierName = $shippingCost->getCarrierName();
-
-            // Initialize seller and carrierName in shippingCostsBySeller array
-            if (!isset($shippingCostsBySeller[$sellerId][$carrierName])) {
-                $shippingCostsBySeller[$sellerId][$carrierName] = 0;
-            }
-
-            if (!$shippingCost) {
-                continue;
-            }
-
-            $taxCalculator = TaxManagerFactory::getManager($shopAddress, $shippingCost->getIdTaxRulesGroup())
-                ->getTaxCalculator()
-            ;
-            $taxRate = 1 + ((float)$taxCalculator->getTotalRate() / 100);
-
-            $shippingCostsBySeller[$sellerId][$carrierName] += (float)$shippingCost->getCost() * $taxRate;
-        }
-
-        return $shippingCostsBySeller;
+            ->fetchAllAssociative();
     }
 
     public function isMainOrder(int $id_order): bool
     {
         $order = $this->registry->getConnection()
             ->executeQuery(
-                'SELECT id_order FROM '._DB_PREFIX_.
+                'SELECT id_order FROM ' . _DB_PREFIX_ .
                 'marketplace_seller_order WHERE id_order <> :id_order and id_order_main = :id_order',
                 ['id_order' => $id_order]
-            )
-        ;
+            );
 
         return $order->rowCount() > 0;
-    }
-
-    private function getMarketplaceSellerRepository(): MarketplaceSellerRepository
-    {
-        return $this->registry->getRepository(MarketplaceSeller::class);
-    }
-
-    private function getSellerProductRepository(): MarketplaceSellerProductRepository
-    {
-        return new MarketplaceSellerProductRepository(
-            $this->registry->getConnection(), _DB_PREFIX_
-        );
     }
 
 }

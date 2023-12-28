@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2022 Bwlab of Luigi Massa and Contributors
  * Bwlab of Luigi Massa is an Italy Company
@@ -44,17 +45,17 @@ class MarketplaceOrderCore extends OrderCore
         }
 
         $all_main_orders = array_map(static function (array $record) {
-            return (int) $record['id_order_main'];
+            return (int)$record['id_order_main'];
         }, $marketplace_order_ids);
         $main_orders = array_diff($order_ids, $all_main_orders);
         $seller_order_ids = array_map(static function (array $record) {
-            return (int) $record['id_order'];
+            return (int)$record['id_order'];
         }, $marketplace_order_ids);
 
         $order_to_filter_ids = array_merge($seller_order_ids, $main_orders);
 
         $sal = array_filter($customer_orders, static function ($order) use ($order_to_filter_ids) {
-            return in_array((int) $order['id_order'], $order_to_filter_ids);
+            return in_array((int)$order['id_order'], $order_to_filter_ids);
         });
 
         return $sal;
@@ -67,8 +68,7 @@ class MarketplaceOrderCore extends OrderCore
             sprintf('(%s)', implode(',', $customer_order_ids));
 
         $seller_order_ids = Db::getInstance()
-            ->executeS($sql)
-        ;
+            ->executeS($sql);
         if (0 === count($seller_order_ids)) {
             return [];
         }

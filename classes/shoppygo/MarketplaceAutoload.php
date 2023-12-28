@@ -30,6 +30,63 @@ class MarketplaceAutoload extends PrestaShopAutoload
     private $admin_controller_shoppygo = 'controllers/admin/shoppygo/marketplace/';
     private $classes_shoppygo_marketplace = 'classes/shoppygo/marketplace/';
 
+    public function load($className)
+    {
+        // Retrocompatibility
+        if (isset(static::$class_aliases[$className]) && !interface_exists($className, false) &&
+            !class_exists($className, false)) {
+            return $this->getEval($className);
+        }
+
+        // regenerate the class index if the requested file doesn't exists
+        if ((isset($this->index[$className]) && $this->index[$className]['path'] &&
+                !is_file($this->root_dir . $this->index[$className]['path'])) ||
+            (isset($this->index[$className . 'Core']) && $this->index[$className . 'Core']['path'] &&
+                !is_file($this->root_dir . $this->index[$className . 'Core']['path'])) ||
+            !file_exists(static::getNamespacedStubFileIndex())) {
+            $this->generateIndex();
+        }
+
+        // If $classname has not core suffix (E.g. Shop, Product)
+        if (substr($className, -4) != 'Core' && !class_exists($className, false)) {
+            $classDir = (isset($this->index[$className]['override']) &&
+                $this->index[$className]['override'] === true) ? $this->normalizeDirectory(
+                _PS_ROOT_DIR_
+            ) : $this->root_dir;
+
+            // If requested class does not exist, load associated core class
+            if (isset($this->index[$className]) && !$this->index[$className]['path']) {
+                require_once $classDir . $this->index[$className . 'Core']['path'];
+                $this->loadMarketplaceCoreClass($className, $classDir);
+
+                if ($this->index[$className . 'Core']['type'] != 'interface') {
+                    $marketplacePrefixClass = $this->getMarketplacePrefixClass($className);
+                    $this->getEvalCore($className, $marketplacePrefixClass);
+                }
+            } else {
+                // request a non Core Class load the associated Core class if exists
+                if (isset($this->index[$className . 'Core'])) {
+                    require_once $this->root_dir . $this->index[$className . 'Core']['path'];
+                }
+
+                if (isset($this->index[$className])) {
+                    require_once $classDir . $this->index[$className]['path'];
+                }
+            }
+        } elseif (isset($this->index[$className]['path']) && $this->index[$className]['path']) {
+            // Call directly ProductCore, ShopCore class
+            require_once $this->root_dir . $this->index[$className]['path'];
+        }
+        if (strpos($className, 'PrestaShop\PrestaShop\Adapter\Entity') !== false) {
+            require_once static::getNamespacedStubFileIndex();
+        }
+    }
+
+    private function getEval(string $className): mixed
+    {
+        return eval('class ' . $className . ' extends ' . static::$class_aliases[$className] . ' {}');
+    }
+
     public function generateIndex()
     {
         if (class_exists('Configuration') && defined('_PS_CREATION_DATE_')) {
@@ -48,13 +105,13 @@ class MarketplaceAutoload extends PrestaShopAutoload
             $this->getClassesFromDir('controllers/')
         );
 
-        $contentNamespacedStub = '<?php '."\n".'namespace PrestaShop\\PrestaShop\\Adapter\\Entity;'."\n\n";
+        $contentNamespacedStub = '<?php ' . "\n" . 'namespace PrestaShop\\PrestaShop\\Adapter\\Entity;' . "\n\n";
 
         foreach ($coreClasses as $coreClassName => $coreClass) {
             if (substr($coreClassName, -4) == 'Core') {
                 $coreClassName = substr($coreClassName, 0, -4);
                 if ($coreClass['type'] != 'interface') {
-                    $contentNamespacedStub .= $coreClass['type'].' '.$coreClassName.' extends \\'.$coreClassName.' {};'.
+                    $contentNamespacedStub .= $coreClass['type'] . ' ' . $coreClassName . ' extends \\' . $coreClassName . ' {};' .
                         "\n";
                 }
             }
@@ -73,152 +130,40 @@ class MarketplaceAutoload extends PrestaShopAutoload
             $coreClassesWOOverrides = $coreClasses;
         }
 
-        $contentStub = '<?php'."\n\n";
+        $contentStub = '<?php' . "\n\n";
 
         foreach ($coreClassesWOOverrides as $coreClassName => $coreClass) {
             if (substr($coreClassName, -4) == 'Core') {
                 $coreClassNameNoCore = substr($coreClassName, 0, -4);
                 if ($coreClass['type'] != 'interface') {
-                    $contentStub .= $coreClass['type'].' '.$coreClassNameNoCore.' extends '.$coreClassName.' {};'."\n";
+                    $contentStub .= $coreClass['type'] . ' ' . $coreClassNameNoCore . ' extends ' . $coreClassName . ' {};' . "\n";
                 }
             }
         }
         ksort($classes);
         $classes = $this->replaceControllerCore($classes);
 
-        $content = '<?php return '.var_export($classes, true).'; ?>';
+        $content = '<?php return ' . var_export($classes, true) . '; ?>';
 
         // Write classes index on disc to cache it
         $filename = static::getCacheFileIndex();
         @mkdir(_PS_CACHE_DIR_, 0777, true);
 
         if (!$this->dumpFile($filename, $content)) {
-            Tools::error_log('Cannot write temporary file '.$filename);
+            Tools::error_log('Cannot write temporary file ' . $filename);
         }
 
         $stubFilename = static::getStubFileIndex();
         if (!$this->dumpFile($stubFilename, $contentStub)) {
-            Tools::error_log('Cannot write temporary file '.$stubFilename);
+            Tools::error_log('Cannot write temporary file ' . $stubFilename);
         }
 
         $namespacedStubFilename = static::getNamespacedStubFileIndex();
         if (!$this->dumpFile($namespacedStubFilename, $contentNamespacedStub)) {
-            Tools::error_log('Cannot write temporary file '.$namespacedStubFilename);
+            Tools::error_log('Cannot write temporary file ' . $namespacedStubFilename);
         }
 
         $this->index = $classes;
-    }
-
-    public function load($className)
-    {
-        // Retrocompatibility
-        if (isset(static::$class_aliases[$className]) && !interface_exists($className, false) &&
-            !class_exists($className, false)) {
-            return $this->getEval($className);
-        }
-
-        // regenerate the class index if the requested file doesn't exists
-        if ((isset($this->index[$className]) && $this->index[$className]['path'] &&
-                !is_file($this->root_dir.$this->index[$className]['path'])) ||
-            (isset($this->index[$className.'Core']) && $this->index[$className.'Core']['path'] &&
-                !is_file($this->root_dir.$this->index[$className.'Core']['path'])) ||
-            !file_exists(static::getNamespacedStubFileIndex())) {
-            $this->generateIndex();
-        }
-
-        // If $classname has not core suffix (E.g. Shop, Product)
-        if (substr($className, -4) != 'Core' && !class_exists($className, false)) {
-            $classDir = (isset($this->index[$className]['override']) &&
-                $this->index[$className]['override'] === true) ? $this->normalizeDirectory(
-                _PS_ROOT_DIR_
-            ) : $this->root_dir;
-
-            // If requested class does not exist, load associated core class
-            if (isset($this->index[$className]) && !$this->index[$className]['path']) {
-                require_once $classDir.$this->index[$className.'Core']['path'];
-                $this->loadMarketplaceCoreClass($className, $classDir);
-
-                if ($this->index[$className.'Core']['type'] != 'interface') {
-                    $marketplacePrefixClass = $this->getMarketplacePrefixClass($className);
-                    $this->getEvalCore($className, $marketplacePrefixClass);
-                }
-            } else {
-                // request a non Core Class load the associated Core class if exists
-                if (isset($this->index[$className.'Core'])) {
-                    require_once $this->root_dir.$this->index[$className.'Core']['path'];
-                }
-
-                if (isset($this->index[$className])) {
-                    require_once $classDir.$this->index[$className]['path'];
-                }
-            }
-        } elseif (isset($this->index[$className]['path']) && $this->index[$className]['path']) {
-            // Call directly ProductCore, ShopCore class
-            require_once $this->root_dir.$this->index[$className]['path'];
-        }
-        if (strpos($className, 'PrestaShop\PrestaShop\Adapter\Entity') !== false) {
-            require_once static::getNamespacedStubFileIndex();
-        }
-    }
-
-    private function getEval(string $className): mixed
-    {
-        return eval('class '.$className.' extends '.static::$class_aliases[$className].' {}');
-    }
-
-    private function getEvalCore(string $className, string $marketplacePrefixClass): void
-    {
-        eval(
-            $this->index[$className.'Core']['type'].' '.$className.' extends '.$marketplacePrefixClass.$className.
-            'Core {}'
-        );
-    }
-
-    private function getMarketplacePrefixClass(string $className): string
-    {
-        $marketplacePrefixClass = '';
-        if (isset($this->index[$className.'Core']['marketplace']) === true &&
-            $this->index[$className.'Core']['marketplace'] === true) {
-            $marketplacePrefixClass = '\Marketplace';
-        }
-
-        return $marketplacePrefixClass;
-    }
-
-    private function isControllerClass($classname)
-    {
-        if (isset($this->index[$classname.'Core']['controller']) === false) {
-            return false;
-        }
-
-        return $this->index[$classname.'Core']['controller'] === true;
-    }
-
-    private function isMarketplaceClass($classname)
-    {
-        if (isset($this->index[$classname.'Core']['marketplace']) === false) {
-            return false;
-        }
-
-        return $this->index[$classname.'Core']['marketplace'] === true;
-    }
-
-    private function loadMarketplaceCoreClass(string $className, string $classDir): void
-    {
-        if ($this->isMarketplaceClass($className) === true) {
-            if ($this->isControllerClass($className) === true) {
-                if (strpos($className, 'Admin') === false) {
-                    require_once $classDir.$this->front_controller_shoppygo.'Marketplace'.$className.'.php';
-                } else {
-                    require_once $classDir.$this->admin_controller_shoppygo.'Marketplace'.$className.'.php';
-                }
-            }
-        }
-    }
-
-    private function normalizeDirectory($directory)
-    {
-        return rtrim($directory, '/\\').DIRECTORY_SEPARATOR;
     }
 
     private function replaceControllerCore(array $classes): array
@@ -235,6 +180,61 @@ class MarketplaceAutoload extends PrestaShopAutoload
         $classes['OrderCore']['controller'] = false;
 
         return $classes;
+    }
+
+    private function normalizeDirectory($directory)
+    {
+        return rtrim($directory, '/\\') . DIRECTORY_SEPARATOR;
+    }
+
+    private function loadMarketplaceCoreClass(string $className, string $classDir): void
+    {
+        if ($this->isMarketplaceClass($className) === true) {
+            if ($this->isControllerClass($className) === true) {
+                if (strpos($className, 'Admin') === false) {
+                    require_once $classDir . $this->front_controller_shoppygo . 'Marketplace' . $className . '.php';
+                } else {
+                    require_once $classDir . $this->admin_controller_shoppygo . 'Marketplace' . $className . '.php';
+                }
+            }
+        }
+    }
+
+    private function isMarketplaceClass($classname)
+    {
+        if (isset($this->index[$classname . 'Core']['marketplace']) === false) {
+            return false;
+        }
+
+        return $this->index[$classname . 'Core']['marketplace'] === true;
+    }
+
+    private function isControllerClass($classname)
+    {
+        if (isset($this->index[$classname . 'Core']['controller']) === false) {
+            return false;
+        }
+
+        return $this->index[$classname . 'Core']['controller'] === true;
+    }
+
+    private function getMarketplacePrefixClass(string $className): string
+    {
+        $marketplacePrefixClass = '';
+        if (isset($this->index[$className . 'Core']['marketplace']) === true &&
+            $this->index[$className . 'Core']['marketplace'] === true) {
+            $marketplacePrefixClass = '\Marketplace';
+        }
+
+        return $marketplacePrefixClass;
+    }
+
+    private function getEvalCore(string $className, string $marketplacePrefixClass): void
+    {
+        eval(
+            $this->index[$className . 'Core']['type'] . ' ' . $className . ' extends ' . $marketplacePrefixClass . $className .
+            'Core {}'
+        );
     }
 }
 
