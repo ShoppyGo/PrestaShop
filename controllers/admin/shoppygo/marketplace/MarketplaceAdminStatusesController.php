@@ -37,7 +37,7 @@ class MarketplaceAdminStatusesControllerCore extends \AdminStatusesControllerCor
             $hookDispatcher = $this->get('prestashop.core.hook.dispatcher');
             $hookDispatcher->dispatchWithParameters('marketPlaceAdminStatusOrderPostProcess', [
                 'id_order_state' => $id_order_state,
-                'is_seller'      => (bool)Tools::getValue('is_seller'),
+                'is_seller' => (bool)Tools::getValue('is_seller'),
             ]);
         }
 
