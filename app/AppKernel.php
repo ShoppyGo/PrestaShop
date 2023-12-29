@@ -26,17 +26,19 @@
 
 use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use PrestaShop\PrestaShop\Core\Version;
+use PrestaShop\TranslationToolsBundle\TranslationToolsBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
 
 class AppKernel extends Kernel
 {
-    const VERSION = '8.0.3';
-    const MAJOR_VERSION_STRING = '8';
-    const MAJOR_VERSION = 8;
-    const MINOR_VERSION = 0;
-    const RELEASE_VERSION = 3;
+    const VERSION = Version::VERSION;
+    const MAJOR_VERSION_STRING = Version::MAJOR_VERSION_STRING;
+    const MAJOR_VERSION = Version::MAJOR_VERSION;
+    const MINOR_VERSION = Version::MINOR_VERSION;
+    const RELEASE_VERSION = Version::RELEASE_VERSION;
 
     /**
      * Lock stream is saved as static field, this way if multiple AppKernel are instanciated (this can happen in
@@ -59,14 +61,15 @@ class AppKernel extends Kernel
             new Symfony\Bundle\SwiftmailerBundle\SwiftmailerBundle(),
             new Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle(),
+            new ApiPlatform\Symfony\Bundle\ApiPlatformBundle(),
             // PrestaShop Core bundle
             new PrestaShopBundle\PrestaShopBundle(),
             // PrestaShop Translation parser
-            new PrestaShop\TranslationToolsBundle\TranslationToolsBundle(),
+            new TranslationToolsBundle(),
             new League\Tactician\Bundle\TacticianBundle(),
             new FOS\JsRoutingBundle\FOSJsRoutingBundle(),
+            //ShoppyGo Marketplace
             new ShoppyGo\MarketplaceBundle\ShoppyGoMarketplaceBundle(),
-
         );
 
         if (in_array($this->getEnvironment(), array('dev', 'test'), true)) {
@@ -214,6 +217,7 @@ class AppKernel extends Kernel
 
         // Add translation paths to load into the translator. The paths are loaded by the Symfony's FrameworkExtension
         $loader->load(function (ContainerBuilder $container) {
+            /** @var array $moduleTranslationsPaths */
             $moduleTranslationsPaths = $container->getParameter('modules_translation_paths');
             foreach ($this->getActiveModules() as $activeModulePath) {
                 $translationsDir = _PS_MODULE_DIR_ . $activeModulePath . '/translations';

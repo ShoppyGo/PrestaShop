@@ -26,7 +26,7 @@
 
 use PrestaShop\PrestaShop\Core\Hook\HookDispatcher;
 
-class AdminStatusesControllerOverride extends AdminStatusesController
+class AdminStatusesController extends AdminStatusesControllerCore
 {
     public function postProcess()
     {

@@ -24,7 +24,6 @@
  *}
 {extends file=$layout}
 
-
 {block name='head' append}
   <meta property="og:type" content="product">
   {if $product.cover}
@@ -48,6 +47,7 @@
 {/block}
 
 {block name='content'}
+
   <section id="main">
     <meta content="{$product.url}">
 
@@ -65,6 +65,7 @@
                 <i class="material-icons left">&#xE314;</i>
                 <i class="material-icons right">&#xE315;</i>
               </div>
+
             {/block}
           </section>
         {/block}
@@ -84,8 +85,6 @@
             <div id="product-description-short-{$product.id}"
                  class="product-description">{$product.description_short nofilter}</div>
           {/block}
-
-          {widget name="shoppygomarketplaceproduct" hook='displaySellerProductDetail' id_product=$product.id}
 
           {if $product.is_customizable && count($product.customizations.fields)}
             {block name='product_customization'}
